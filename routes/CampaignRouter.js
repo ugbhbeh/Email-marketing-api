@@ -137,6 +137,49 @@ CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
 
 // add csv mass import to create to link clients to campaign 
 
+CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) => {
+      const { id: campaignId } = req.params;
+      const userId = req.user.userId;
+      const { clients } = req.body; 
+
+    if (!Array.isArray(clients) || clients.length === 0) {
+     return res.status(400).json({ error: "No clients provided" });
+    }
+    
+    try{
+        const campaign = await prisma.campaign.findFirst({
+      where: { id: campaignId, userId },
+    });
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found or not accessible" });
+    }
+     const connectOrCreateData = clients.map((client) => ({
+      where: { email: client.email }, 
+      create: { email: client.email, name: client.name },
+    }));     
+
+    const updatedCampaign = await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        customers: {
+          connectOrCreate: connectOrCreateData,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        customers: {
+          select: { id: true, email: true, name: true },
+        },
+      },
+    });
+
+     res.status(200).json(updatedCampaign);
+    } catch (error){
+        res.status(400).json({error: error.message});
+    }
+});
+
 // delete clients from a campaign one by one 
 
 CampaignRouter.delete("/:Id/customers/:customerId", authenticateToken, async (req, res) => {
@@ -184,10 +227,7 @@ CampaignRouter.delete("/:id", authenticateToken, async (req,res) => {
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
-})
-
-
-
+});
 
 module.exports = CampaignRouter
 
