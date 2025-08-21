@@ -87,6 +87,8 @@ UserRouter.post('/login', async (req, res) => {
 
 });
 
+// gets the user profile
+
 UserRouter.get("/:id/profile", authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
