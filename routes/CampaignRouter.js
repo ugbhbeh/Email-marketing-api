@@ -10,9 +10,7 @@ const prisma = new PrismaClient();
 
 CampaignRouter.get("/", authenticateToken, async (req, res) => {
     const userId = req.user.userId;
-
     try{
-
         const campaigns = await prisma.campaign.findMany({
             where:{userId}, 
             select: {
@@ -23,6 +21,39 @@ CampaignRouter.get("/", authenticateToken, async (req, res) => {
             }
         });
         res.status(200).json(campaigns)
+    } catch (error){
+        res.status(400).json({error: error.message})
+    }
+    
+})
+
+// get campaign details for a single campaign
+CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const {id} = req.params
+
+    try{
+        const campaigndetails = await prisma.campaign.findFirst({
+            where:{id, userId}, 
+            select: {
+               id: true,
+               name: true,
+               createdAt: true,
+               updatedAt: true,
+               customers: {
+                select: {
+                    id: true,
+                    email: true, 
+                    name: true
+                }
+               }
+            }
+        });
+        
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+        res.status(200).json(campaigndetails)
     } catch (error){
         res.status(400).json({error: error.message})
     }
