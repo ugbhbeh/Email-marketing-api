@@ -1,7 +1,5 @@
-const {Router, json} = require("express");
+const {Router} = require("express");
 const {PrismaClient} = require("@prisma/client");
-const jwt = require("jsonwebtoken");
-const bcrypt = require('bcrypt');
 const {authenticateToken} = require("../middleware/Auth");
 const CampaignRouter = Router();
 const prisma = new PrismaClient();
@@ -90,17 +88,32 @@ try {
 }
 });
 
-
-
 // upload csv of clients and store them in data base
 
-// route to manually add clients to database
+// route to manually add clients to campaign and database
 
 // add clients from database to campaign page
 
 // delete clients from a campaign one by one 
 
-// delete a campaign (/)
+// delete a campaign 
+
+CampaignRouter.delete("/:id", authenticateToken, async (req,res) => {
+    const userId = req.user.userId;
+    const {id} = req.params
+
+    try{
+         await prisma.campaign.deleteMany({
+            where:{id, userId }
+         });
+        
+         if (result.count === 0) {
+      return res.status(404).json({ error: "Campaign not found or not accessible" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+})
 
 
 
