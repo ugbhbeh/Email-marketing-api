@@ -8,9 +8,30 @@ const prisma = new PrismaClient();
 
 // return all campaigns created by a user
 
+CampaignRouter.get("/", authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    try{
+
+        const campaigns = await prisma.campaign.findMany({
+            where:{userId}, 
+            select: {
+               id: true,
+               name: true,
+               createdAt: true,
+               updatedAt: true,
+            }
+        });
+        res.status(200).json(campaigns)
+    } catch (error){
+        res.status(400).json({error: error.message})
+    }
+    
+})
+
 // create campaign 
 
-CampaignRouter.post('/new', authenticateToken, async (req, res) => {
+CampaignRouter.post('/', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {name} = req.body
 try {
@@ -33,20 +54,22 @@ try {
       }
      });
      res.status(201).json(campaign);
-} catch (err) {
-    res.status(400).json({error: err.message})
+} catch (error) {
+    res.status(400).json({error: error.message})
 }
 });
+
+
 
 // upload csv of clients and store them in data base
 
 // route to manually add clients to database
 
-
+// add clients from database to campaign page
 
 // delete clients from a campaign one by one 
 
-// delete a campaign 
+// delete a campaign (/)
 
 
 
