@@ -28,14 +28,7 @@ try {
                 id: true,
                 email: true,
                 name: true,
-            },
-            customers:{
-                select:{
-                id: true,
-                email: true,
-                name: true
-            }
-            },   
+            }, 
         }
       }
      });
