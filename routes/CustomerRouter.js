@@ -136,11 +136,26 @@ CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
 // delete clients from database
+
+CustomerRouter.delete("/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
+
+  try {
+    const deletedCustomer = await prisma.customer.deleteMany({
+      where: { id, userId },
+    });
+
+    if (deletedCustomer.count === 0) {
+      return res.status(404).json({ error: "Customer not found or not yours" });
+    }
+
+    res.status(204).send(); 
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+module.exports = CustomerRouter;
