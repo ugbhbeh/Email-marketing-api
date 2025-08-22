@@ -4,6 +4,31 @@ const {authenticateToken} = require("../middleware/Auth");
 const CustomerRouter = Router();
 const prisma = new PrismaClient();
 
+// get all customers linked to a user
+
+CustomerRouter.get("/", authenticateToken, async(req, res) => {
+    const userId = req.user.userId;
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+
+    try{
+        const CustomerList = await prisma.customer.findMany({
+            where: {id: userId},
+            select: {
+                id: true,
+                email: true,
+                name: true,
+            },
+        })
+      res.json(CustomerList)
+    } catch (error){
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
 // add csv of clients 
 
 CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
@@ -75,12 +100,47 @@ CustomerRouter.post("/single", authenticateToken, async(req, res) => {
                },
             });
      res.status(200).json(customer);
-
      }catch (error) {
         res.status(400).json({ error: error.message });
      }
 } )
 
 // update info for clients 
+
+CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
+  const { email, name } = req.body;
+
+  try {
+    const updatedCustomer = await prisma.customer.updateMany({
+      where: { id, userId },
+      data: {
+        email,
+        name,
+      },
+    });
+
+    if (updatedCustomer.count === 0) {
+      return res.status(404).json({ error: "Customer not found or not yours" });
+    }
+
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      select: { id: true, email: true, name: true },
+    });
+
+    res.status(200).json(customer);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
+
+
+
+
+
 
 // delete clients from database
