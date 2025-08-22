@@ -16,15 +16,21 @@ model User {
   name          String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  
   campaigns     Campaign[]       
+  customers     Customer[] 
 }
 
 model Customer {
   id            String         @id @default(uuid())
-  email         String         @unique
+  email         String        
   name          String?
-  campaign      Campaign[]     @relation("CampaignCustomers")
 
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+
+  campaign      Campaign[]     @relation("CampaignCustomers")
+  @@unique([email, userId])
 }
 
 model Campaign{
@@ -32,7 +38,9 @@ model Campaign{
   name         String    
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt     
+  
   userId     String
   user       User        @relation(fields: [userId], references: [id])
+  
   customers  Customer[]  @relation("CampaignCustomers")
 }
