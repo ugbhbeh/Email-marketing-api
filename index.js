@@ -8,6 +8,8 @@ dotenv.config();
 
 const UserRouter = require("./routes/UserRouter.js");
 const CampaignRouter = require("./routes/CampaignRouter.js")
+const CustomerRouter = require("./routes/CustomerRouter.js")
+
 const app = express();
 const httpServer = http.createServer(app);
 const port = 8080;
@@ -18,6 +20,7 @@ app.use(express.json());
 
 app.use("/users", UserRouter); 
 app.use("/campaign", CampaignRouter)
+app.use("/customer", CustomerRouter)
 
 
 httpServer.listen(port, () => {
