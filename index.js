@@ -7,8 +7,9 @@ const dotenv = require('dotenv')
 dotenv.config();
 
 const UserRouter = require("./routes/UserRouter.js");
-const CampaignRouter = require("./routes/CampaignRouter.js")
-const CustomerRouter = require("./routes/CustomerRouter.js")
+const CampaignRouter = require("./routes/CampaignRouter.js");
+const CustomerRouter = require("./routes/CustomerRouter.js");
+const MailingRouter = require("./routes/MailingRouter.js");
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use("/users", UserRouter); 
 app.use("/campaign", CampaignRouter)
 app.use("/customer", CustomerRouter)
+app.use("/mail", MailingRouter)
 
 
 httpServer.listen(port, () => {
