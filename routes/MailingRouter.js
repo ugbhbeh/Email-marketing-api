@@ -8,13 +8,29 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
-  const { to, subject, message } = req.body;
+   const userId = req.user.userId;
+  const { campaignId, subject, message } = req.body;
   
-  if (!to || !Array.isArray(to) || to.length === 0) {
-    return res.status(400).json({ error: "Recipients (to) must be a non-empty array" });
+if (!campaignId || !subject || !message) {
+    return res.status(400).json({ error: "campaignId, subject, and message are required" });
   }
-  try {
-   
+    
+   try {
+    
+    const campaign = await prisma.campaign.findFirst({
+      where: { id: campaignId, userId },
+      include: { customers: true },
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found or not Authorized" });
+    }
+
+    if (campaign.customers.length === 0) {
+      return res.status(400).json({ error: "No customers in this campaign" });
+    }
+
+    
     const transporter = nodemailer.createTransport({
       host: "in-v3.mailjet.com",
       port: 587,
@@ -24,26 +40,22 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
       },
     });
 
-     const results = [];
-    for (const recipient of to) {
-      try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: recipient,
-          subject,
-          text: message,
-        });
-        results.push({ recipient, status: "sent" });
-      } catch (err) {
-        results.push({ recipient, status: "failed", error: err.message });
-      }
+    
+    for (const customer of campaign.customers) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to: customer.email,
+        subject,
+        text: message,
+      });
     }
 
-    res.json({ success: true, results });
+    res.json({ success: true, sent: campaign.customers.length });
   } catch (err) {
     console.error("Mailjet error:", err);
-    res.status(500).json({ success: false, error: "Failed to send campaign emails" });
+    res.status(500).json({ error: "Failed to send campaign emails" });
   }
+
 });
     
 
