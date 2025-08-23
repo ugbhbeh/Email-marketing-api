@@ -89,7 +89,7 @@ UserRouter.post('/login', async (req, res) => {
 
 // gets the user profile
 
-UserRouter.get("/:id/profile", authenticateToken, async (req, res) => {
+UserRouter.get("/profile", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
    if (!user) {
