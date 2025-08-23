@@ -9,6 +9,9 @@ const prisma = new PrismaClient();
 CustomerRouter.get("/", authenticateToken, async(req, res) => {
     const userId = req.user.userId;
 
+    const user = await prisma.user.findFirst({
+      where:{userId}
+    })
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -16,7 +19,7 @@ CustomerRouter.get("/", authenticateToken, async(req, res) => {
 
     try{
         const CustomerList = await prisma.customer.findMany({
-            where: {id: userId},
+            where: {userId},
             select: {
                 id: true,
                 email: true,
