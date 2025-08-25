@@ -9,18 +9,18 @@ const prisma = new PrismaClient();
 // Sign up
 UserRouter.post('/', async (req, res) => {
     try {
-        const {email, username, password} = req.body;
+        const {email, name, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);  
         const user = await prisma.user.create({
             data: {
                 email,
-                username,
+                name,
                 password: hashedPassword,
             },
             select: {
                 id: true,
                 email: true,
-                username: true,
+                name: true,
                 createdAt: true,
             }
         });
