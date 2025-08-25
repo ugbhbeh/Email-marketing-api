@@ -40,7 +40,7 @@ UserRouter.post('/guest', async (req, res) => {
     const guestUser = await prisma.user.create({
       data: {
         email: guestEmail,
-        username: `Guest_${timestamp}`,
+        name: `Guest_${timestamp}`,
         password: password
       }
     });

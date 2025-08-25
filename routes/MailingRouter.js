@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
-   const userId = req.user.userId;
+  const userId = req.user.userId;
   const { campaignId, subject, message } = req.body;
   
 if (!campaignId || !subject || !message) {
