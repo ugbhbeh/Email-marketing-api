@@ -4,9 +4,9 @@ const { authenticateToken } = require("../middleware/Auth");
 const CustomerRouter = Router();
 const prisma = new PrismaClient();
 
-// ----------------------------
-// Get all customers linked to a user
-// ----------------------------
+
+// Get all customers for a user
+
 CustomerRouter.get("/", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -34,9 +34,9 @@ CustomerRouter.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Add multiple customers via CSV
-// ----------------------------
+
+// Add customers with CSV
+
 CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { clients } = req.body;
@@ -52,7 +52,7 @@ CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
         name: client.name || null,
         userId,
       })),
-      skipDuplicates: true, // won't throw on duplicates
+      skipDuplicates: true, 
     });
 
     const customers = await prisma.customer.findMany({
@@ -66,9 +66,9 @@ CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
+
 // Add a single customer manually
-// ----------------------------
+
 CustomerRouter.post("/single", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { email, name } = req.body;
@@ -83,7 +83,6 @@ CustomerRouter.post("/single", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // assumes you defined @@unique([email, userId]) in your schema
     const customer = await prisma.customer.upsert({
       where: { email_userId: { email, userId } },
       update: { name: name || null },
@@ -97,9 +96,8 @@ CustomerRouter.post("/single", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
 // Update customer info
-// ----------------------------
+
 CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { id } = req.params;
@@ -126,9 +124,9 @@ CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Delete a customer
-// ----------------------------
+
+// Delete customer
+
 CustomerRouter.delete("/:id", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { id } = req.params;
@@ -142,7 +140,7 @@ CustomerRouter.delete("/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Customer not found or not yours" });
     }
 
-    res.status(204).send(); // no content
+    res.status(204).send(); 
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -4,9 +4,8 @@ const { authenticateToken } = require("../middleware/Auth");
 const CampaignRouter = Router();
 const prisma = new PrismaClient();
 
-// ----------------------------
-// Get all campaigns for logged-in user
-// ----------------------------
+// Get all campaigns for a user
+
 CampaignRouter.get("/", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
@@ -27,9 +26,8 @@ CampaignRouter.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Get details for a single campaign
-// ----------------------------
+// Get campaign by id with details 
+
 CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { id } = req.params;
@@ -58,9 +56,8 @@ CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Create a new campaign
-// ----------------------------
+//  new campaign
+
 CampaignRouter.post("/", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { name } = req.body;
@@ -87,9 +84,8 @@ CampaignRouter.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Add existing customers to a campaign
-// ----------------------------
+// Add  customers to campaign manually
+
 CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { id: campaignId } = req.params;
@@ -128,9 +124,8 @@ CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
   }
 });
 
-// ----------------------------
-// Bulk import customers into a campaign via CSV
-// ----------------------------
+// Bulk import customers 
+
 CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) => {
   const { id: campaignId } = req.params;
   const userId = req.user.userId;
@@ -150,7 +145,7 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) =>
     }
 
     const connectOrCreateData = clients.map((client) => ({
-      where: { email_userId: { email: client.email, userId } }, // composite unique
+      where: { email_userId: { email: client.email, userId } }, 
       create: { email: client.email, name: client.name, userId },
     }));
 
@@ -174,9 +169,9 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) =>
   }
 });
 
-// ----------------------------
-// Remove a single customer from a campaign
-// ----------------------------
+
+// Remove a single customer 
+
 CampaignRouter.delete("/:id/customers/:customerId", authenticateToken, async (req, res) => {
   const { id: campaignId, customerId } = req.params;
   const userId = req.user.userId;
@@ -208,9 +203,9 @@ CampaignRouter.delete("/:id/customers/:customerId", authenticateToken, async (re
   }
 });
 
-// ----------------------------
-// Delete a campaign
-// ----------------------------
+
+// Delete campaign
+
 CampaignRouter.delete("/:id", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const { id } = req.params;
