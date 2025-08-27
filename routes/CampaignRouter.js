@@ -7,10 +7,10 @@ const prisma = new PrismaClient();
 // return all campaigns created by a user
 
 CampaignRouter.get("/", authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
+    const Id = req.user.userId;
     try{
         const campaigns = await prisma.campaign.findMany({
-            where:{userId}, 
+            where:{Id}, 
             select: {
                id: true,
                name: true,
@@ -27,12 +27,12 @@ CampaignRouter.get("/", authenticateToken, async (req, res) => {
 
 // get campaign details for a single campaign
 CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
+    const Id = req.user.userId;
     const {id} = req.params
 
     try{
         const campaignDetails = await prisma.campaign.findFirst({
-            where:{id, userId}, 
+            where:{id, Id}, 
             select: {
                id: true,
                name: true,
@@ -61,12 +61,12 @@ CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
 // create campaign 
 
 CampaignRouter.post('/', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
+    const Id = req.user.userId;
     const {name} = req.body
 try {
      const campaign = await prisma.campaign.create({
         data: {
-            userId,
+            Id,
             name
         },
         select: {
@@ -91,7 +91,7 @@ try {
 // add clients from database to campaign page manually 
 
 CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
+    const Id = req.user.userId;
     const {id: campaignId} = req.params
     const {customerIds} = req.body
 
@@ -102,7 +102,7 @@ CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
     try{
      
      const campaign = await prisma.campaign.findFirst({
-        where: {id: campaignId, userId},
+        where: {id: campaignId, Id},
      });
 
      if(!campaign){
@@ -139,7 +139,7 @@ CampaignRouter.post("/:id/customers", authenticateToken, async (req, res) => {
 
 CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) => {
       const { id: campaignId } = req.params;
-      const userId = req.user.userId;
+      const Id = req.user.userId;
       const { clients } = req.body; 
 
     if (!Array.isArray(clients) || clients.length === 0) {
@@ -148,7 +148,7 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) =>
     
     try{
         const campaign = await prisma.campaign.findFirst({
-      where: { id: campaignId, userId },
+      where: { id: campaignId, Id },
     });
     if (!campaign) {
       return res.status(404).json({ error: "Campaign not found or not accessible" });
@@ -182,33 +182,40 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, async (req, res) =>
 
 // delete clients from a campaign one by one 
 
-CampaignRouter.delete("/:Id/customers/:customerId", authenticateToken, async (req, res) => {
-  const { Id, customerId } = req.params;
+CampaignRouter.delete("/:id/customers/:customerId", authenticateToken, async (req, res) => {
+  const { id: campaignId, customerId } = req.params;
   const userId = req.user.userId;
 
   try {
-   
     const campaign = await prisma.campaign.findFirst({
-      where: { id: Id, userId },
+      where: { id: campaignId, userId },
     });
 
     if (!campaign) {
       return res.status(404).json({ error: "Campaign not found or not accessible" });
     }
 
-    await prisma.campaign.update({
+    const updatedCampaign = await prisma.campaign.update({
       where: { id: campaignId },
       data: {
         customers: {
           disconnect: { id: customerId }
         },
       },
+      select: {
+        id: true,
+        name: true,
+        customers: { select: { id: true, name: true, email: true } }
+      }
     });
+
+    res.status(200).json(updatedCampaign);
   } catch (error) {
     console.error("Error removing customer from campaign:", error);
     res.status(400).json({ error: error.message });
   }
 });
+
 
 // delete a campaign 
 
@@ -228,6 +235,7 @@ CampaignRouter.delete("/:id", authenticateToken, async (req,res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 module.exports = CampaignRouter
 

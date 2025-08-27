@@ -20,9 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use("/users", UserRouter); 
-app.use("/campaign", CampaignRouter)
-app.use("/customer", CustomerRouter)
-app.use("/mail", MailingRouter)
+app.use("/campaigns", CampaignRouter)
+app.use("/customers", CustomerRouter)
+app.use("/mails", MailingRouter)
 
 
 httpServer.listen(port, () => {

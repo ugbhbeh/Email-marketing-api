@@ -7,10 +7,10 @@ const prisma = new PrismaClient();
 // get all customers linked to a user
 
 CustomerRouter.get("/", authenticateToken, async(req, res) => {
-    const userId = req.user.userId;
+    const Id = req.user.userId;
 
     const user = await prisma.user.findFirst({
-      where:{userId}
+      where:{Id}
     })
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -35,7 +35,7 @@ CustomerRouter.get("/", authenticateToken, async(req, res) => {
 // add csv of clients 
 
 CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
-  const userId = req.user.userId;
+  const Id = req.user.userId;
   const { clients } = req.body;
 
   if (!Array.isArray(clients) || clients.length === 0) {
@@ -48,13 +48,13 @@ CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
         data: clients.map((client) => ({
         email: client.email,
         name: client.name || null,
-        userId, 
+        Id, 
       })),
       skipDuplicates: true, 
     });
 
      const customers = await prisma.customer.findMany({
-      where: { userId },
+      where: { Id },
       select: {
         id: true,
         email: true,
@@ -71,7 +71,7 @@ CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
 // add manual clients 
 
 CustomerRouter.post("/single", authenticateToken, async(req, res) => {
-     const userId = req.user.userId;
+     const Id = req.user.userId;
      const {email, name} = req.body;
 
      if(!email) {
@@ -86,7 +86,7 @@ CustomerRouter.post("/single", authenticateToken, async(req, res) => {
 
         const customer = await prisma.customer.upsert({
             where: {
-                email_userId: { email, userId }, 
+                email_Id: { email, Id }, 
                },
             update: {
                 name: name || null,
@@ -94,7 +94,7 @@ CustomerRouter.post("/single", authenticateToken, async(req, res) => {
             create: {
                 email,
                 name: name || null,
-                userId,
+                Id,
                },
             select: {
                 id: true,
@@ -111,13 +111,13 @@ CustomerRouter.post("/single", authenticateToken, async(req, res) => {
 // update info for clients 
 
 CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
-  const userId = req.user.userId;
+  const Id = req.user.userId;
   const { id } = req.params;
   const { email, name } = req.body;
 
   try {
     const updatedCustomer = await prisma.customer.updateMany({
-      where: { id, userId },
+      where: { id, Id },
       data: {
         email,
         name,
@@ -142,12 +142,12 @@ CustomerRouter.put("/:id", authenticateToken, async (req, res) => {
 // delete clients from database
 
 CustomerRouter.delete("/:id", authenticateToken, async (req, res) => {
-  const userId = req.user.userId;
+  const Id = req.user.userId;
   const { id } = req.params;
 
   try {
     const deletedCustomer = await prisma.customer.deleteMany({
-      where: { id, userId },
+      where: { id, Id },
     });
 
     if (deletedCustomer.count === 0) {
