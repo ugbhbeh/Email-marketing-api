@@ -5,7 +5,7 @@ const {PrismaClient} = require("@prisma/client");
 const {authenticateToken} = require("../middleware/Auth");
 const MailingRouter = Router();
 const prisma = new PrismaClient();
-const router = express.Router();
+
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
   const Id = req.user.userId;

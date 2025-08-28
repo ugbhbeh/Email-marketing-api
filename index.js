@@ -1,8 +1,6 @@
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const { PrismaClient } = require('@prisma/client');
 const dotenv = require('dotenv')
 dotenv.config();
 
