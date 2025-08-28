@@ -138,7 +138,6 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, upload.single("file
   }
 
   try {
-    
     const campaign = await prisma.campaign.findFirst({
       where: { id: campaignId, userId },
     });
@@ -148,17 +147,20 @@ CampaignRouter.post("/:id/customers/csv", authenticateToken, upload.single("file
 
     const customers = [];
 
-    fs.createReadStream(req.file.path)
-      .pipe(csv({ headers: true, skipEmptyLines: true }))
-      .on("data", (row) => {
-        
-        if (row.email) {
-          customers.push({
-            email: row.email.trim(),
-            name: row.name?.trim() || null,
-          });
-        }
-      })
+   fs.createReadStream(req.file.path)
+  .pipe(csv({
+    headers: ["email", "name"],  
+    skipEmptyLines: true,
+    mapHeaders: ({ header }) => header.trim().toLowerCase()
+  }))
+  .on("data", (row) => {
+    if (row.email) {
+      customers.push({
+        email: row.email.trim(),
+        name: row.name?.trim() || null,
+      });
+    }
+  })
       .on("end", async () => {
         
         fs.unlinkSync(req.file.path);

@@ -42,19 +42,25 @@ CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req
   const userId = req.user.userId;
 
   if (!req.file) {
+    console.log("no file uploaded")
     return res.status(400).json({ error: "No CSV file uploaded" });
+ 
   }
 
   try {
     const customers = [];
+     console.log("parsing document")
     fs.createReadStream(req.file.path)
-      .pipe(csv({ headers: true, skipEmptyLines: true }))
+      .pipe(csv({
+        headers: ["email", "name"],  
+        skipEmptyLines: true,
+        mapHeaders: ({ header }) => header.trim().toLowerCase()
+      }))
       .on("data", (row) => {
         if (row.email) {
           customers.push({
             email: row.email.trim(),
             name: row.name?.trim() || null,
-            userId,
           });
         }
       })
@@ -62,9 +68,10 @@ CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req
         fs.unlinkSync(req.file.path);
 
         if (customers.length === 0) {
+           console.log("no cusotmers in file")
           return res.status(400).json({ error: "No valid customers found in CSV" });
         }
-
+        console.log("adding cusotmers to database")
         await prisma.customer.createMany({
           data: customers,
           skipDuplicates: true,
@@ -74,11 +81,13 @@ CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req
           where: { userId },
           select: { id: true, email: true, name: true },
         });
+         console.log("sending back attempted customers")
 
         res.status(200).json(allCustomers);
       })
       .on("error", (err) => {
         fs.unlinkSync(req.file.path);
+         console.log("csv parsing failed")
         res.status(500).json({ error: "CSV parsing failed", details: err.message });
       });
   } catch (error) {
