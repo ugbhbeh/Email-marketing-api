@@ -2,8 +2,11 @@ const { Router } = require("express");
 const { PrismaClient } = require("@prisma/client");
 const { authenticateToken } = require("../middleware/Auth");
 const CustomerRouter = Router();
+const multer = require("multer");
+const csv = require("csv-parser");
+const fs = require("fs");
 const prisma = new PrismaClient();
-
+const upload = multer({ dest: "uploads/" });
 
 // Get all customers for a user
 
@@ -34,34 +37,52 @@ CustomerRouter.get("/", authenticateToken, async (req, res) => {
   }
 });
 
-
 // Add customers with CSV
-
-CustomerRouter.post("/csv", authenticateToken, async (req, res) => {
+CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req, res) => {
   const userId = req.user.userId;
-  const { clients } = req.body;
 
-  if (!Array.isArray(clients) || clients.length === 0) {
-    return res.status(400).json({ error: "No clients provided" });
+  if (!req.file) {
+    return res.status(400).json({ error: "No CSV file uploaded" });
   }
 
   try {
-    await prisma.customer.createMany({
-      data: clients.map((client) => ({
-        email: client.email,
-        name: client.name || null,
-        userId,
-      })),
-      skipDuplicates: true, 
-    });
+    const customers = [];
+    fs.createReadStream(req.file.path)
+      .pipe(csv({ headers: true, skipEmptyLines: true }))
+      .on("data", (row) => {
+        if (row.email) {
+          customers.push({
+            email: row.email.trim(),
+            name: row.name?.trim() || null,
+            userId,
+          });
+        }
+      })
+      .on("end", async () => {
+        fs.unlinkSync(req.file.path);
 
-    const customers = await prisma.customer.findMany({
-      where: { userId },
-      select: { id: true, email: true, name: true },
-    });
+        if (customers.length === 0) {
+          return res.status(400).json({ error: "No valid customers found in CSV" });
+        }
 
-    res.status(200).json(customers);
+        await prisma.customer.createMany({
+          data: customers,
+          skipDuplicates: true,
+        });
+
+        const allCustomers = await prisma.customer.findMany({
+          where: { userId },
+          select: { id: true, email: true, name: true },
+        });
+
+        res.status(200).json(allCustomers);
+      })
+      .on("error", (err) => {
+        fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: "CSV parsing failed", details: err.message });
+      });
   } catch (error) {
+    if (req.file) fs.unlinkSync(req.file.path); 
     res.status(400).json({ error: error.message });
   }
 });

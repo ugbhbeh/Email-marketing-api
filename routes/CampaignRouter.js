@@ -6,6 +6,7 @@ const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs")
 const prisma = new PrismaClient();
+const upload = multer({ dest: "uploads/" });
 
 // Get all campaigns for a user
 
