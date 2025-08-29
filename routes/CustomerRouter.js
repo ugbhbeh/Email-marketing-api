@@ -5,9 +5,9 @@ const CustomerRouter = Router();
 const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs");
-const { useId } = require("react");
 const prisma = new PrismaClient();
 const upload = multer({ dest: "uploads/" });
+
 
 // Get all customers for a user
 
@@ -61,7 +61,7 @@ CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req
           customers.push({
             email: row.email.trim(),
             name: row.name?.trim() || null,
-            useId
+            userId
           });
         }
       })
