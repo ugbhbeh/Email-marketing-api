@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
-  const Id = req.user.userId;
+  const userId = req.user.userId;
   const { campaignId, subject, message } = req.body;
   
 if (!campaignId || !subject || !message) {
@@ -18,7 +18,7 @@ if (!campaignId || !subject || !message) {
    try {
     
     const campaign = await prisma.campaign.findFirst({
-      where: { id: campaignId, Id },
+    where: { id: Number(campaignId), userId: Id },
       include: { customers: true },
     });
 
@@ -40,15 +40,19 @@ if (!campaignId || !subject || !message) {
       },
     });
 
+        await Promise.all(
+      campaign.customers.map((customer) =>
+        transporter.sendMail({
+          from: process.env.EMAIL_FROM,
+          to: customer.email,
+          subject,
+          text: message,
+          html: html || `<p>${message}</p>`,
+        })
+      )
+    )
     
-    for (const customer of campaign.customers) {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: customer.email,
-        subject,
-        text: message,
-      });
-    }
+  
 
     res.json({ success: true, sent: campaign.customers.length });
   } catch (err) {
