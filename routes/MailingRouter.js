@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
-  const { campaignId, subject, message, html } = req.body; // added html support
+  const { campaignId, subject, message, html } = req.body; 
 
   if (!campaignId || !subject || !message) {
     console.log("information not received fully");
@@ -53,7 +53,7 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
           to: customer.email,
           subject,
           text: message,
-          html: html || `<p>${message}</p>`, // safe fallback
+          html: html || `<p>${message}</p>`, 
         })
       )
     );
