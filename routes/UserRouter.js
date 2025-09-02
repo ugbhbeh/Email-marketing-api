@@ -91,11 +91,7 @@ UserRouter.post('/login', async (req, res) => {
 
 UserRouter.get("/profile", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
-
-   if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
+  
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
