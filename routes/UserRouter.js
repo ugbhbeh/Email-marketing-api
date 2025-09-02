@@ -89,20 +89,25 @@ UserRouter.post('/login', async (req, res) => {
 
 // gets the user profile
 
+// gets the user profile
 UserRouter.get("/profile", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
-  
+
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        campaigns: {
-          include: {
-            customers: true,
-          },
-        },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     res.json(user);
   } catch (error) {
@@ -110,6 +115,7 @@ UserRouter.get("/profile", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 // Delete user account (protected)
  UserRouter.delete('/:id', authenticateToken, async (req, res) => {
