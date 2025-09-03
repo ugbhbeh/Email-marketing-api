@@ -87,33 +87,36 @@ UserRouter.post('/login', async (req, res) => {
 
 });
 
-
-// gets the user profile
+// profile route
 UserRouter.get("/profile", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        _count: {
+          select: {
+            campaigns: true,
+            customers: true,
+          },
+        },
       },
     });
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.json(user);
+    res.json({
+      email: user.email,
+      name: user.name,
+      campaignsCount: user._count.campaigns,
+      customersCount: user._count.customers,
+      mailsSent: user.mailsSent,
+    });
   } catch (error) {
     console.error("Error fetching user profile:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 
 // Delete user account (protected)
