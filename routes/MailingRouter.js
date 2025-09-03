@@ -58,6 +58,14 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
       )
     );
 
+    await prisma.user.update({
+    where: { id: userId },
+    data: { mailsSent: { increment: campaign.customers.length } }
+});
+
+
+    
+
     console.log("Campaign sent");
     res.json({ success: true, sent: campaign.customers.length });
 
