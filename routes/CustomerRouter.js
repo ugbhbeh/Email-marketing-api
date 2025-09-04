@@ -5,6 +5,8 @@ const CustomerRouter = Router();
 const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs");
+const { cursorTo } = require("readline");
+const { json } = require("stream/consumers");
 const prisma = new PrismaClient();
 const upload = multer({ dest: "uploads/" });
 
@@ -37,6 +39,56 @@ CustomerRouter.get("/", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// get customer by id
+
+CustomerRouter.get("/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const customerId = req.params.id
+
+  try {
+    const customer = await prisma.customer.findFirst({
+      where: {id: customerId, userId},
+      include: {
+        campaign: true,
+        maillog: {
+          orderBy: {sentAt:"desc"}
+        }
+      }
+    });
+
+    if (!customer) {
+      return res.status(404).json({error: "Customer not found"})
+    }
+    res.json({
+      name: customer.name,
+      email: customer.email,
+      createdAt: customer.createdAt,   
+      campaigns: customer.campaign.map(c => ({
+        name: c.name,
+      })),
+      mailHistory: customer.maillog.map(m => ({
+        subject: m.subject,
+        status: m.status,
+        error: m.error,
+        sentAt: m.sentAt,
+        campaignId: m.campaignId,
+      })),
+      stats: {
+        totalMails: customer.maillog.length,
+        sentCount: customer.maillog.filter(m => m.status === "SENT").length,
+        failedCount: customer.maillog.filter(m => m.status === "FAILED").length,
+        lastMail: customer.maillog.length > 0 ? customer.maillog[0].sentAt : null,
+      }
+
+    });
+
+  } catch (err) {
+    console.error("error fetching customer deepdive:", err);
+    res.status(500).json({error: "internal server error"})
+  }
+})
+
 
 // Add customers with CSV
 CustomerRouter.post("/csv", authenticateToken, upload.single("file"), async (req, res) => {
