@@ -50,11 +50,22 @@ CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
       },
     });
 
+    const sent = await prisma.mailLog.count({ where: { userId, campaignId: id } });
+    const success = await prisma.mailLog.count({ where: { userId, campaignId: id, status: "SENT" } });
+    const failed = await prisma.mailLog.count({ where: { userId, campaignId: id, status: "FAILED" } });
+    
+    const uniqueCustomers = await prisma.mailLog.findMany({
+      where: { campaignId },
+      select: { customerId: true },
+      distinct: ['customerId'],
+     });
+    const uniqueCount = uniqueCustomers.length;
+
     if (!campaign) {
       return res.status(404).json({ error: "Campaign not found" });
     }
 
-    res.status(200).json(campaign);
+    res.status(200).json(campaign, sent, success,failed, uniqueCount);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
