@@ -3,6 +3,7 @@ const {PrismaClient} = require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
 const {authenticateToken} = require("../middleware/Auth");
+const { use } = require("react");
 const UserRouter = Router();
 const prisma = new PrismaClient();
 
@@ -93,31 +94,43 @@ UserRouter.get("/profile", authenticateToken, async (req, res) => {
 
   try {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: {id: userId},
       include: {
-        _count: {
-          select: {
-            campaigns: true,
-            customers: true,
-          },
-        },
+        campaigns: true,
+        customers: true,
       },
     });
 
-    res.json({
-      email: user.email,
-      name: user.name,
-      campaignsCount: user._count.campaigns,
-      customersCount: user._count.customers,
-      mailsSent: user.mailsSent,
+    if (!user) return res.status(404).json({error: "user not found in database"})
+    
+    const totalSent = await prisma.mailLog.count({where: { userId}});
+    const successCount = await prisma.mailLog.count({where: {userId, status:"SENT"}});
+    const failureCount = await prisma.mailLog.count({where: {userId, status:"FAILED"}})
+
+    const recentMails = await prisma.mailLog.findMany({
+      where: {userId},
+      orderBy: {sentAt: "desc"},
+      take: 5,
+      include: {customer: true, campaign: true}
     });
+
+    res.json({
+      ...user,
+      stats: {
+        campaigns: user.campaigns.length,
+        customers: user.customers.length,
+        totalSent,
+        successCount,
+        failureCount,
+        recentMails
+      }
+    })
+ 
   } catch (error) {
     console.error("Error fetching user profile:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-
 
 // Delete user account (protected)
  UserRouter.delete('/:id', authenticateToken, async (req, res) => {
