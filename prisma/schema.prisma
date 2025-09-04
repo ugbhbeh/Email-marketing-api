@@ -19,8 +19,8 @@ model User {
   
   campaigns     Campaign[]       
   customers     Customer[] 
+  MailLog       MailLog []
 
-  mailsSent     Int       @default(0)
 }
 
 model Customer {
@@ -32,9 +32,31 @@ model Customer {
   user          User           @relation(fields: [userId], references: [id])
 
   campaign      Campaign[]     @relation("CampaignCustomers")
+  maillog       MailLog []
   
   @@unique([email, userId])
 }
+
+model MailLog {
+  id          String    @id @default(uuid())
+  subject     String
+  message     String
+  sentAt      DateTime  @default(now())
+
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  campaignId  String?
+  campaign    Campaign? @relation(fields: [campaignId], references: [id])
+
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+
+  status      String    @default("SENT") 
+  error       String?   
+}
+
 
 model Campaign{
   id           String           @id @default(uuid())
@@ -46,4 +68,5 @@ model Campaign{
   user         User             @relation(fields: [userId], references: [id])
   
   customers    Customer[]       @relation("CampaignCustomers")
+  maillog      MailLog []
 }
