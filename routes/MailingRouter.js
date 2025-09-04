@@ -1,4 +1,3 @@
-const express = require("express");
 const nodemailer = require("nodemailer");
 const { Router } = require("express");
 const { PrismaClient } = require("@prisma/client");
@@ -9,31 +8,23 @@ const prisma = new PrismaClient();
 
 MailingRouter.post("/send", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
-  const { campaignId, subject, message, html } = req.body; 
+  const { campaignId, subject, message, html } = req.body;
 
   if (!campaignId || !subject || !message) {
-    console.log("information not received fully");
     return res.status(400).json({ error: "campaignId, subject, and message are required" });
   }
 
   try {
-      const campaign = await prisma.campaign.findFirst({
-      where: {
-        id: campaignId,     
-        userId: userId      
-      },
-      include: {
-        customers: true
-      }
+    const campaign = await prisma.campaign.findFirst({
+      where: { id: campaignId, userId },
+      include: { customers: true }
     });
 
     if (!campaign) {
-      console.log("Campaign not found or not Authorized");
       return res.status(404).json({ error: "Campaign not found or not Authorized" });
     }
 
     if (campaign.customers.length === 0) {
-      console.log("No customers in this campaign");
       return res.status(400).json({ error: "No customers in this campaign" });
     }
 
@@ -46,29 +37,47 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
       },
     });
 
+    // Send + log mails
     await Promise.all(
-      campaign.customers.map((customer) =>
-        transporter.sendMail({
-          from: process.env.EMAIL_FROM,
-          to: customer.email,
-          subject,
-          text: message,
-          html: html || `<p>${message}</p>`, 
-        })
-      )
+      campaign.customers.map(async (customer) => {
+        try {
+          await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: customer.email,
+            subject,
+            text: message,
+            html: html || `<p>${message}</p>`,
+          });
+
+          await prisma.mailLog.create({
+            data: {
+              subject,
+              message,
+              userId,
+              campaignId,
+              customerId: customer.id,
+              status: "SENT",
+            },
+          });
+        } catch (err) {
+          // log failures too
+          await prisma.mailLog.create({
+            data: {
+              subject,
+              message,
+              userId,
+              campaignId,
+              customerId: customer.id,
+              status: "FAILED",
+              error: err.message,
+            },
+          });
+        }
+      })
     );
-
-    await prisma.user.update({
-    where: { id: userId },
-    data: { mailsSent: { increment: campaign.customers.length } }
-});
-
-
-    
 
     console.log("Campaign sent");
     res.json({ success: true, sent: campaign.customers.length });
-
   } catch (err) {
     console.error("Mailjet error:", err);
     res.status(500).json({ error: "Failed to send campaign emails" });
