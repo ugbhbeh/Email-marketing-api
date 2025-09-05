@@ -5,8 +5,6 @@ const CustomerRouter = Router();
 const multer = require("multer");
 const csv = require("csv-parser");
 const fs = require("fs");
-const { cursorTo } = require("readline");
-const { json } = require("stream/consumers");
 const prisma = new PrismaClient();
 const upload = multer({ dest: "uploads/" });
 

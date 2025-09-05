@@ -37,7 +37,6 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
       },
     });
 
-    // Send + log mails
     await Promise.all(
       campaign.customers.map(async (customer) => {
         try {
@@ -60,7 +59,6 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
             },
           });
         } catch (err) {
-          // log failures too
           await prisma.mailLog.create({
             data: {
               subject,

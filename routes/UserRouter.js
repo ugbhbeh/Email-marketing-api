@@ -3,7 +3,6 @@ const {PrismaClient} = require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
 const {authenticateToken} = require("../middleware/Auth");
-const { use } = require("react");
 const UserRouter = Router();
 const prisma = new PrismaClient();
 
