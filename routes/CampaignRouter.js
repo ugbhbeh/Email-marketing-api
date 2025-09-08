@@ -50,6 +50,8 @@ CampaignRouter.get("/:id", authenticateToken, async (req, res) => {
       },
     });
 
+    
+
     const sent = await prisma.mailLog.count({ where: { userId, campaignId: id } });
     const success = await prisma.mailLog.count({ where: { userId, campaignId: id, status: "SENT" } });
     const failed = await prisma.mailLog.count({ where: { userId, campaignId: id, status: "FAILED" } });

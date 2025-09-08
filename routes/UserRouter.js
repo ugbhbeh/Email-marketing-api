@@ -24,6 +24,7 @@ UserRouter.post('/', async (req, res) => {
                 createdAt: true,
             }
         });
+        console.log(user)
         res.status(201).json(user);
     } catch (error) {
         res.status(400).json({error: error.message});
@@ -50,6 +51,7 @@ UserRouter.post('/guest', async (req, res) => {
     res.json({
       token,
       userId: guestUser.id
+      
     });
   } catch (err) {
     console.error('Guest login error:', err);
@@ -80,7 +82,7 @@ UserRouter.post('/login', async (req, res) => {
             process.env.JWT_SECRET,
         );
 
-        res.json({token, userId: user.id });
+        res.json({token, userId: user.id,  });
     } catch (error) {
         res.status(500).json({error: error.message});
     }
