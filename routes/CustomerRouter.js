@@ -50,7 +50,8 @@ CustomerRouter.get("/:id", authenticateToken, async (req, res) => {
       include: {
         campaign: true,
         maillog: {
-          orderBy: {sentAt:"desc"}
+          orderBy: {sentAt:"desc"},
+          include: { campaign: true }
         }
       }
     });
@@ -70,7 +71,7 @@ CustomerRouter.get("/:id", authenticateToken, async (req, res) => {
         status: m.status,
         error: m.error,
         sentAt: m.sentAt,
-        campaignId: m.campaignId,
+      campaignName: m.campaign?.name
       })),
       stats: {
         totalMails: customer.maillog.length,

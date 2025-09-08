@@ -24,7 +24,6 @@ UserRouter.post('/', async (req, res) => {
                 createdAt: true,
             }
         });
-        console.log(user)
         res.status(201).json(user);
     } catch (error) {
         res.status(400).json({error: error.message});
