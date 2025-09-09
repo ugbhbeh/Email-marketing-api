@@ -6,17 +6,17 @@ const { authenticateToken } = require("../middleware/Auth");
 const AiRouter = Router();
 
 const endpoint = "https://models.github.ai/inference";
-const model = "openai/gpt-5-mini";
+const model = "gpt-4o-mini";
 const token = process.env.GITHUB_TOKEN;
 
 const client = ModelClient(endpoint, new AzureKeyCredential(token));
 
-AiRouter.post("/chat", authenticateToken, async (req, res) => {
+AiRouter.post("/", authenticateToken, async (req, res) => {
   const { messages, tone } = req.body; 
-   const tonevalue = tone || "professional"
+   const toneValue = tone || "professional"
   const systemPrompt = {
     role: "system",
-    content: `You are an AI assistant specialized in writing, refining, and suggesting marketing emails and subject lines. Keep your responses clear, concise, and ${tonevalue}.`
+    content: `You are an AI assistant specialized in writing, refining, and suggesting marketing emails and subject lines. Keep your responses clear, concise, and ${toneValue}.`
   };
 
   try {
@@ -25,12 +25,10 @@ AiRouter.post("/chat", authenticateToken, async (req, res) => {
     });
 
     if (isUnexpected(response)) {
-      throw response.body.error;
+      throw response.body.error; 
     }
-
     res.json({ reply: response.body.choices[0].message.content });
   } catch (err) {
-    console.error("AI request failed:", err);
     res.status(500).json({ error: "AI chat failed" });
   }
 });
