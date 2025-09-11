@@ -82,4 +82,28 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
   }
 });
 
+MailRouter.get("/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.userId;
+  const mailId = req.params.id;
+
+  try {
+    const mail = await prisma.mailLog.findFirst({
+      where: { id: mailId, userId },
+      include: {
+        campaign: true,
+        customer: true, 
+      },
+    });
+    if (!mail) return res.status(404).json({ error: "Mail not found" });
+    res.json(mail);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch mail details" });
+  }
+});
+
+
+
+
+
+
 module.exports = MailingRouter;
