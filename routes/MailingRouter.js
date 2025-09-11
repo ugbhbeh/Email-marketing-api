@@ -82,7 +82,7 @@ MailingRouter.post("/send", authenticateToken, async (req, res) => {
   }
 });
 
-MailRouter.get("/:id", authenticateToken, async (req, res) => {
+MailingRouter.get("/:id", authenticateToken, async (req, res) => {
   const userId = req.user.userId;
   const mailId = req.params.id;
 
@@ -100,10 +100,5 @@ MailRouter.get("/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch mail details" });
   }
 });
-
-
-
-
-
 
 module.exports = MailingRouter;
