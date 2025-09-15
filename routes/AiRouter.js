@@ -12,11 +12,8 @@ const token = process.env.GITHUB_TOKEN;
 const client = ModelClient(endpoint, new AzureKeyCredential(token));
 
 AiRouter.post("/", authenticateToken, async (req, res) => {
-  const { messages, tone } = req.body; 
+  const { messages, tone } = req.body;
   const toneValue = tone || "professional";
-
-  console.log("🤖 AI request received", { userId: req.user.userId, tone: toneValue });
-  console.log("📝 Incoming messages:", JSON.stringify(messages, null, 2));
 
   const systemPrompt = {
     role: "system",
@@ -24,32 +21,39 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
   };
 
   try {
-    console.log("📡 Sending request to AI client...");
+    if (!process.env.AZURE_OPENAI_KEY || !process.env.AZURE_OPENAI_ENDPOINT || !process.env.MODEL) {
+      return res.status(500).json({
+        error: "Missing Azure OpenAI configuration",
+        debug: {
+          AZURE_OPENAI_KEY: !!process.env.AZURE_OPENAI_KEY,
+          AZURE_OPENAI_ENDPOINT: !!process.env.AZURE_OPENAI_ENDPOINT,
+          MODEL: !!process.env.MODEL
+        }
+      });
+    }
+
     const response = await client.path("/chat/completions").post({
       body: { messages: [systemPrompt, ...messages], model }
     });
 
-    console.log("✅ AI response received, status:", response.status);
-
     if (isUnexpected(response)) {
-      console.error("❌ Unexpected AI response:", response.body);
-      throw response.body.error; 
+      throw response.body.error;
     }
 
-    const reply = response.body.choices?.[0]?.message?.content || null;
-    console.log("📝 AI reply:", reply);
-
-    if (!reply) {
-      console.warn("⚠️ No reply returned by AI model");
-      return res.status(500).json({ error: "AI returned no response" });
-    }
-
-    res.json({ reply });
+    res.json({
+      reply: response.body.choices[0].message.content,
+      debug: {
+        messagesSent: messages.length,
+        tone: toneValue,
+        model: process.env.MODEL
+      }
+    });
   } catch (err) {
-    console.error("❌ AI chat failed:", err.message || err);
-    res.status(500).json({ error: "AI chat failed", details: err.message || err });
+    console.error("AI chat error:", err);
+    res.status(500).json({ error: "AI chat failed", debug: { message: err.message } });
   }
 });
+
 
 
 
