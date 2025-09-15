@@ -8,9 +8,21 @@ const prisma = new PrismaClient();
 
 // Sign up
 UserRouter.post('/', async (req, res) => {
+    console.log("📩 Signup route hit");
+    console.log("➡️ Request body:", req.body);
+
     try {
         const {email, name, password} = req.body;
+
+        if (!email || !name || !password) {
+            console.warn("⚠️ Missing fields:", { email, name, password });
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
+        console.log("🔒 Hashing password...");
         const hashedPassword = await bcrypt.hash(password, 10);  
+
+        console.log("🛠 Creating user in DB...");
         const user = await prisma.user.create({
             data: {
                 email,
@@ -24,9 +36,12 @@ UserRouter.post('/', async (req, res) => {
                 createdAt: true,
             }
         });
+
+        console.log("✅ User created successfully:", user);
         res.status(201).json(user);
     } catch (error) {
-        res.status(400).json({error: error.message});
+        console.error("❌ Signup error:", error);
+        res.status(400).json({ error: error.message });
     }
 });
 
@@ -60,19 +75,34 @@ UserRouter.post('/guest', async (req, res) => {
 
 // Login
 UserRouter.post('/login', async (req, res) => {
+    console.log("📩 Login route hit");
+    console.log("➡️ Request body:", req.body);
+
     try { 
         const {email, password} = req.body;
-        const user = await prisma.user.findUnique({where: {email}});
+
+        if (!email || !password) {
+            console.warn("⚠️ Missing login fields:", { email, password });
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
+        console.log("🔍 Looking up user by email:", email);
+        const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            return res.status(401).json({error: "invalid credentials"});
+            console.warn("❌ No user found with email:", email);
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        console.log("🔒 Comparing passwords...");
         const validPassword = await bcrypt.compare(password, user.password);
-        if(!validPassword) {
-            return res.status(401).json({error:"invalid credentials"});
+
+        if (!validPassword) {
+            console.warn("❌ Invalid password for email:", email);
+            return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        console.log("🔑 Signing JWT...");
         const token = jwt.sign(
             {
                 userId: user.id, 
@@ -81,11 +111,12 @@ UserRouter.post('/login', async (req, res) => {
             process.env.JWT_SECRET,
         );
 
-        res.json({token, userId: user.id,  });
+        console.log("✅ Login successful for user:", user.id);
+        res.json({ token, userId: user.id });
     } catch (error) {
-        res.status(500).json({error: error.message});
+        console.error("❌ Login error:", error);
+        res.status(500).json({ error: error.message });
     }
-
 });
 
 // profile route
@@ -133,20 +164,34 @@ UserRouter.get("/profile", authenticateToken, async (req, res) => {
 });
 
 // Delete user account (protected)
- UserRouter.delete('/:id', authenticateToken, async (req, res) => {
-    try {
-        if (req.user.userId !== req.params.id){
-            return res.status(403).json({error: "access denied"});
-       }
+UserRouter.delete('/:id', authenticateToken, async (req, res) => {
+    console.log("🗑️ Delete user route hit");
+    console.log("➡️ Authenticated userId:", req.user?.userId);
+    console.log("➡️ Requested delete userId:", req.params.id);
 
-       await prisma.user.delete({
-        where: {id: req.params.id}
-       });
+    try {
+        if (String(req.user.userId) !== String(req.params.id)) {
+            console.warn("❌ Access denied: user mismatch", {
+                authenticatedUserId: req.user.userId,
+                requestedUserId: req.params.id
+            });
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        console.log("🔍 Attempting to delete user with ID:", req.params.id);
+        await prisma.user.delete({
+            where: { id: req.params.id }
+        });
+
+        console.log("✅ User deleted successfully:", req.params.id);
         res.status(204).send();
-       } catch (error) {
-        res.status(400).json({error: error.message});
-       }
- });
+    } catch (error) {
+        console.error("❌ Error deleting user:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+
 
   
  module.exports = UserRouter;
