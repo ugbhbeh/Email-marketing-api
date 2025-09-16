@@ -54,7 +54,4 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-
-
-
 module.exports = AiRouter;

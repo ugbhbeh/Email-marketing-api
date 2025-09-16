@@ -18,9 +18,8 @@ UserRouter.post('/', async (req, res) => {
       select: { id: true, email: true, name: true, createdAt: true }
     });
 
-    res.status(201).json({ user, debug: { email, hashedPassword: !!hashedPassword } });
   } catch (error) {
-    res.status(400).json({ error: error.message, debug: { body: req.body, envSecret: !!process.env.JWT_SECRET } });
+    res.status(400).json({ error: error.message});
   }
 });
 
@@ -40,10 +39,9 @@ UserRouter.post('/guest', async (req, res) => {
     res.json({
       token,
       userId: guestUser.id,
-      debug: { guestEmail, envSecret: !!process.env.JWT_SECRET }
     });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create guest user', debug: { message: err.message } });
+    res.status(500).json({ error: 'Failed to create guest user'});
   }
 });
 
@@ -61,7 +59,6 @@ UserRouter.post('/login', async (req, res) => {
     if (!user || !validPassword) {
       return res.status(401).json({
         error: "invalid credentials",
-        debug: { email, userFound: !!user, passwordMatch: validPassword }
       });
     }
 
@@ -70,27 +67,11 @@ UserRouter.post('/login', async (req, res) => {
     res.json({
       token,
       userId: user.id,
-      debug: { email, userFound: !!user, passwordMatch: validPassword, envSecret: !!process.env.JWT_SECRET }
     });
   } catch (error) {
-    res.status(500).json({ error: error.message, debug: { body: req.body } });
+    res.status(500).json({ error: error.message });
   }
 });
-
-// Delete user account (protected)
-UserRouter.delete('/:id', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.userId !== req.params.id) {
-      return res.status(403).json({ error: "access denied", debug: { userId: req.user.userId, targetId: req.params.id } });
-    }
-
-    await prisma.user.delete({ where: { id: req.params.id } });
-    res.status(204).json({ success: true, debug: { deletedId: req.params.id } });
-  } catch (error) {
-    res.status(400).json({ error: error.message, debug: { id: req.params.id } });
-  }
-});
-
 
 // profile route
 UserRouter.get("/profile", authenticateToken, async (req, res) => {
@@ -137,7 +118,19 @@ UserRouter.get("/profile", authenticateToken, async (req, res) => {
 });
 
 
+// Delete user account (protected)
+UserRouter.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.userId !== req.params.id) {
+      return res.status(403).json({ error: "access denied"});
+    }
+
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.status(204).json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.message, debug: { id: req.params.id } });
+  }
+});
 
 
-  
  module.exports = UserRouter;
