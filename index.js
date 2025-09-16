@@ -27,18 +27,6 @@ app.use("/customers", CustomerRouter)
 app.use("/mails", MailingRouter)
 app.use("/ai", AiRouter )
 app.use("/archive", ArchiveRouter )
-app.get("/debug-env", (req, res) => {
-  res.json({
-    DATABASE_URL: !!process.env.DATABASE_URL,
-    JWT_SECRET: !!process.env.JWT_SECRET,
-    MAILJET_API_KEY: !!process.env.MAILJET_API_KEY,
-    MAILJET_SECRET_KEY: !!process.env.MAILJET_SECRET_KEY,
-    EMAIL_FROM: !!process.env.EMAIL_FROM,
-    AZURE_OPENAI_KEY: !!process.env.AZURE_OPENAI_KEY,
-    AZURE_OPENAI_ENDPOINT: !!process.env.AZURE_OPENAI_ENDPOINT,
-    MODEL: !!process.env.MODEL,
-  });
-});
 
 
 httpServer.listen(port, () => {

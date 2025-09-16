@@ -10,7 +10,6 @@ const model = "gpt-4o-mini";
 const token = process.env.GITHUB_TOKEN;
 
 const client = ModelClient(endpoint, new AzureKeyCredential(token));
-
 AiRouter.post("/", authenticateToken, async (req, res) => {
   const { messages, tone } = req.body;
   const toneValue = tone || "professional";
@@ -21,14 +20,10 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
   };
 
   try {
-    if (!process.env.AZURE_OPENAI_KEY || !process.env.AZURE_OPENAI_ENDPOINT || !process.env.MODEL) {
+    if (!process.env.GITHUB_TOKEN) {
       return res.status(500).json({
-        error: "Missing Azure OpenAI configuration",
-        debug: {
-          AZURE_OPENAI_KEY: !!process.env.AZURE_OPENAI_KEY,
-          AZURE_OPENAI_ENDPOINT: !!process.env.AZURE_OPENAI_ENDPOINT,
-          MODEL: !!process.env.MODEL
-        }
+        error: "Missing GitHub Models configuration",
+        debug: { GITHUB_TOKEN: !!process.env.GITHUB_TOKEN }
       });
     }
 
@@ -45,7 +40,7 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
       debug: {
         messagesSent: messages.length,
         tone: toneValue,
-        model: process.env.MODEL
+        model
       }
     });
   } catch (err) {
@@ -53,5 +48,6 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "AI chat failed", debug: { message: err.message } });
   }
 });
+
 
 module.exports = AiRouter;
