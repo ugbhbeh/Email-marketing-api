@@ -20,13 +20,6 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
   };
 
   try {
-    if (!process.env.GITHUB_TOKEN) {
-      return res.status(500).json({
-        error: "Missing GitHub Models configuration",
-        debug: { GITHUB_TOKEN: !!process.env.GITHUB_TOKEN }
-      });
-    }
-
     const response = await client.path("/chat/completions").post({
       body: { messages: [systemPrompt, ...messages], model }
     });
@@ -36,18 +29,11 @@ AiRouter.post("/", authenticateToken, async (req, res) => {
     }
 
     res.json({
-      reply: response.body.choices[0].message.content,
-      debug: {
-        messagesSent: messages.length,
-        tone: toneValue,
-        model
-      }
+      reply: response.body.choices[0].message.content
     });
   } catch (err) {
-    console.error("AI chat error:", err);
     res.status(500).json({ error: "AI chat failed", debug: { message: err.message } });
   }
 });
-
 
 module.exports = AiRouter;
