@@ -3,3 +3,4 @@ node_modules/
 /uploads
 /generated/prisma
 .env
+.vscode

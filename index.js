@@ -14,10 +14,7 @@ const app = express();
 const httpServer = http.createServer(app);
 const port = 8080;
 
-app.use(cors({
-  origin: "https://email-marketing-ui.onrender.com",
-  credentials: true
-}));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
